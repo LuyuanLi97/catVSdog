@@ -62,26 +62,36 @@ bool FriendShip::init() {
 	power = 0;
 
 	isBoneExist = false;
+	isFishExist = false;
+	isCatAddingPower = false;
+	isDogAddingPower = false;
+	lastAttack = "cat";
 
-	//add blood bar
+	//血条
 	Sprite* sp0 = Sprite::create("blood_state.png");
-	Sprite* sp = Sprite::create("blood.png");
-
-	percentageCat = 100;
-	percentageDog = 100;
-	pCat = ProgressTimer::create(sp);
-	pCat->setScaleX(90);
-	pCat->setAnchorPoint(Vec2(0, 0));
-	pCat->setType(ProgressTimerType::BAR);
-	pCat->setBarChangeRate(Point(1, 0));
-	pCat->setMidpoint(Point(0, 1));
-	pCat->setPercentage(100);
-	pCat->setPosition(Vec2(origin.x + 14 * pCat->getContentSize().width, origin.y + visibleSize.height - 2 * pCat->getContentSize().height));
-	this->addChild(pCat, 1);
-	//sp0->setAnchorPoint(Vec2(0, 0));
 	sp0->setPosition(visibleSize.width / 2, visibleSize.height - sp0->getContentSize().height / 2);
 	this->addChild(sp0, 0);
 
+	//猫的血条
+	Sprite* sp = Sprite::create("blood.jpg");
+	percentageCat = 100;
+	pCat = ProgressTimer::create(sp);
+	pCat->setType(ProgressTimerType::BAR);
+	pCat->setBarChangeRate(Point(1, 0));
+	pCat->setMidpoint(Point(1, 0.5));
+	pCat->setPercentage(100);
+	pCat->setPosition(Vec2(visibleSize.width / 2-232, visibleSize.height - sp->getContentSize().height - 28));
+	this->addChild(pCat, 1);
+	
+	//狗的血条
+	percentageDog = 100;
+	pDog = ProgressTimer::create(sp);
+	pDog->setType(ProgressTimerType::BAR);
+	pDog->setBarChangeRate(Point(1, 0));
+	pDog->setMidpoint(Point(0, 0.5));
+	pDog->setPercentage(100);
+	pDog->setPosition(Vec2(visibleSize.width / 2 + 238, visibleSize.height - sp->getContentSize().height - 28));
+	this->addChild(pDog, 1);
 	return true;
 }
 
@@ -227,43 +237,44 @@ bool FriendShip::onTouchBegan(Touch *touch, Event *event) {
 		//狗蓄力
 		isDogAddingPower = true;
 	}
-	//test
-	/*auto dogHurtedAnimation = Animation::createWithSpriteFrames(dogHurted, 0.1f);
-	auto dogHurtedAnimate = Animate::create(dogHurtedAnimation);
-	dog->runAction(Repeat::create(dogHurtedAnimate, 1));*/
+	if (cat->getBoundingBox().containsPoint(pos)) {
+		isCatAddingPower = true;
+	}
 	return true;
 }
 
 void FriendShip::onTouchEnded(Touch *touch, Event *event) {
-	// todo
-	/*
-	// 鱼刺
-	fish = Sprite::create("fish.png");
-	fish->setScale(2);
-	auto fishBody = PhysicsBody::createBox(ground->getContentSize(), PhysicsMaterial(20.0f, 0.5f, 1.0f));
-	// 鱼刺和骨头都能和番茄(0010)、猫、狗(0110, 0001)碰撞
-	// set tag 5
-	fishBody->setCategoryBitmask(0x00000007);
-	fishBody->setCollisionBitmask(0x00000007);
-	fishBody->setContactTestBitmask(0x00000007);
-	fishBody->setTag(5);
-	fish->setPhysicsBody(fishBody);
-	this->addChild(fish, 1); */
-	if (isDogAddingPower == true) {
+	if (isDogAddingPower == true && lastAttack == "cat") {
 		bone = Sprite::create("bone.png");
 		auto boneBody = PhysicsBody::createBox(bone->getContentSize(), PhysicsMaterial(20.0f, 0.5f, 1.0f));
 		boneBody->setCategoryBitmask(0x00000007);
 		boneBody->setCollisionBitmask(0x00000001);
 		boneBody->setContactTestBitmask(0x00000001);
-		boneBody->setVelocity(Vec2(-10 * power, 10 * power));
+		boneBody->setVelocity(Vec2(0-10 * power, 10 * power));
 		bone->setPhysicsBody(boneBody);
 		bone->setPosition(3 * visibleSize.width / 4 - 100, 300);
 		this->addChild(bone, 1);
 		isBoneExist = true;
-		isDogAddingPower = false;
 		power = 0;
+		isDogAddingPower = false;
+		lastAttack = "dog";
 	}
-	
+	else if (isCatAddingPower == true && lastAttack == "dog") {
+		fish = Sprite::create("fish.png");
+		auto fishBody = PhysicsBody::createBox(fish->getContentSize(), PhysicsMaterial(20.0f, 0.5f, 1.0f));
+		fishBody->setCategoryBitmask(0x00000007);
+		fishBody->setCollisionBitmask(0x00000001);
+		fishBody->setContactTestBitmask(0x00000001);
+		fishBody->setTag(5);
+		fish->setPhysicsBody(fishBody);
+		fish->setPosition(visibleSize.width / 4 + 100, 300);
+		fishBody->setVelocity(Vec2(10 * power, 10 * power));
+		this->addChild(fish, 1);
+		isFishExist = true;
+		power = 0;
+		isCatAddingPower = false;
+		lastAttack = "cat";
+	}
 }
 
 // 箱子碰到船或者碰到其他箱子之后改变掩码，可以与玩家发生碰撞
@@ -274,21 +285,65 @@ bool FriendShip::onConcactBegin(PhysicsContact & contact) {
 
 void FriendShip::update(float dt) {
 	this->getScene()->getPhysicsWorld()->step(1 / 100.0f);
-	//狗蓄力
-	if (isDogAddingPower == true)
+	//猫狗蓄力
+	if (isDogAddingPower == true || isCatAddingPower == true)
 		power++;
 	//检测骨头是否砸到猫
 	if (isBoneExist) {
 		auto boneRec = bone->getBoundingBox();
 		auto catRec = cat->getBoundingBox();
+		//骨头砸到猫
 		if (catRec.containsPoint(bone->getPosition())) {
 			bone->removeFromParent();
 			auto catHurtedAnimation = Animation::createWithSpriteFrames(catHurted, 0.1f);
 			catHurtedAnimation->setRestoreOriginalFrame(true);
 			auto catHurtedAnimate = Animate::create(catHurtedAnimation);
 			cat->runAction(Repeat::create(catHurtedAnimate, 1));
+
+			percentageCat -= 10;
+			if (percentageCat < 0)
+				percentageCat = 0;
+			pCat->setPercentage(percentageCat);
+			if (percentageCat == 0) {
+				//TODO
+				//狗胜利
+			}
+
+			isBoneExist = false;
+		}
+		//骨头没有砸到猫，且速度为0时， 消失
+		else if (abs(bone->getPhysicsBody()->getVelocity().x - 0.0f) < 0.000001f) {
+			bone->removeFromParent();
 			isBoneExist = false;
 		}
 	}
+	//检测鱼是否砸到狗
+	else if (isFishExist) {
+		auto dogRec = dog->getBoundingBox();
+		//鱼砸到狗
+		if (dogRec.containsPoint(fish->getPosition())) {
+			fish->removeFromParent();
+			auto dogHurtedAnimation = Animation::createWithSpriteFrames(dogHurted, 0.1f);
+			dogHurtedAnimation->setRestoreOriginalFrame(true);
+			auto dogHurtedAnimate = Animate::create(dogHurtedAnimation);
+			dog->runAction(Repeat::create(dogHurtedAnimate, 1));
 
+			percentageDog -= 10;
+			if (percentageDog < 0)
+				percentageDog = 0;
+			pDog->setPercentage(percentageDog);
+			if (percentageDog == 0) {
+				//TODO
+				//猫胜利
+			}
+
+			isFishExist = false;
+		}
+		//鱼没有砸到狗，且速度为0时， 消失
+		else if (abs(fish->getPhysicsBody()->getVelocity().x - 0.0f) < 0.000001f ) {
+			fish->removeFromParent();
+			isFishExist = false;
+		}
+	}
 }
+

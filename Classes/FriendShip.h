@@ -48,7 +48,8 @@ private:
 	int percentageCat, percentageDog;
 	float power;
 	bool isDogAddingPower, isCatAddingPower;
-	bool isBoneExist;
+	//isBoneExist == true时，骨头正在被投掷
+	bool isBoneExist, isFishExist;
 
 	// cat
 	SpriteFrame* catNormal;
@@ -69,6 +70,8 @@ private:
 	SpriteFrame* tomatoHurt1;
 	SpriteFrame* tomatoHurt2;
 	Animation* tomatoDie;
+
+	string lastAttack;
 };
 
 #endif // __FRIEND_SHIP_H__
