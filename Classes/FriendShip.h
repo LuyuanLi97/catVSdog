@@ -69,7 +69,8 @@ private:
 	SpriteFrame* tomatoNormal;
 	SpriteFrame* tomatoHurt1;
 	SpriteFrame* tomatoHurt2;
-	Animation* tomatoDie;
+	Vector<SpriteFrame*> tomatoDie;
+	Vector<SpriteFrame*> tomatoHurted;
 
 	string lastAttack;
 };

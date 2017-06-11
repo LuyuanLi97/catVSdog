@@ -129,16 +129,29 @@ void FriendShip::setFrame() {
 }
 
 void FriendShip::setAni() {
-	//dog hurted
 	dogHurted.reserve(3);
-	dogHurted.pushBack(SpriteFrame::create("/dog/dog_hurted0.png", CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 130, 185))));
-	dogHurted.pushBack(SpriteFrame::create("/dog/dog_hurted1.png", CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 130, 185))));
-	dogHurted.pushBack(SpriteFrame::create("/dog/dog_hurted2.png", CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 130, 185))));
-	//cat hurted
+	for (int i = 0; i < 3; i++) {
+		string filePath = "/dog/dog_hurted" + to_string(i) + ".png";
+		dogHurted.pushBack(SpriteFrame::create(filePath, CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 130, 185))));
+	}
+
 	catHurted.reserve(3);
-	catHurted.pushBack(SpriteFrame::create("/cat/cat_hurted0.png", CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 115, 160))));
-	catHurted.pushBack(SpriteFrame::create("/cat/cat_hurted1.png", CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 115, 160))));
-	catHurted.pushBack(SpriteFrame::create("/cat/cat_hurted2.png", CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 115, 160))));
+	for (int i = 0; i < 3; i++) {
+		string filePath = "/cat/cat_hurted" + to_string(i) + ".png";
+		catHurted.pushBack(SpriteFrame::create(filePath, CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 115, 160))));
+	}
+
+	tomatoHurted.reserve(2);
+	for (int i = 1; i < 3; i++) {
+		string filePath = "/tomato/tomato_hurt" + to_string(i) + ".png";
+		tomatoHurted.pushBack(SpriteFrame::create(filePath, CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 55, 55))));
+	}
+
+	tomatoDie.reserve(6);
+	for (int i = 1; i < 7; i++) {
+		string filePath = "/tomato/die_ani" + to_string(i) + ".png";
+		tomatoDie.pushBack(SpriteFrame::create(filePath, CC_RECT_PIXELS_TO_POINTS(Rect(0, 0, 55, 55))));
+	}
 
 }
 
@@ -181,7 +194,7 @@ void FriendShip::addListener() {
 
 // ¥¥Ω®Ω«…´
 void FriendShip::spriteFall() {
-	// random add tomatoes
+	// add tomatoes randomly
 	// set tag 2
 	for (int i = 0; i < 8; i++) {
 		auto tomato = Sprite::createWithSpriteFrame(tomatoNormal);
@@ -202,9 +215,7 @@ void FriendShip::spriteFall() {
 	// add cat
 	// set tag 3
 	cat = Sprite::createWithSpriteFrame(catNormal);
-	//cat->setAnchorPoint(Vec2(0, 0));
 	cat->setPosition(visibleSize.width / 4, visibleSize.height / 2);
-	//cat->setScale(1.5f);
 	auto catBody = PhysicsBody::createBox(cat->getContentSize(), PhysicsMaterial(200.f, 0.0f, 10.0f));
 	// √®∫Õ∑¨«—≤ª∑¢…˙≈ˆ◊≤
 	catBody->setCategoryBitmask(0x00000006); // 0110
@@ -219,7 +230,6 @@ void FriendShip::spriteFall() {
 	// set tag 4
 	dog = Sprite::createWithSpriteFrame(dogNormal);
 	dog->setPosition(3 * visibleSize.width / 4, visibleSize.height / 2);
-	//dog->setScale(1.5f);
 	auto dogBody = PhysicsBody::createBox(cat->getContentSize(), PhysicsMaterial(200.f, 0.0f, 10.0f));
 	dogBody->setCategoryBitmask(0x00000006); // 0110
 	dogBody->setCollisionBitmask(0x00000006);
@@ -345,5 +355,34 @@ void FriendShip::update(float dt) {
 			isFishExist = false;
 		}
 	}
+
+	//ºÏ≤‚π«Õ∑ «∑Ò‘“µΩ∑¨«—
+	if (isBoneExist) {
+		for (list<Sprite*>::iterator iter = tomatoes.begin(); iter != tomatoes.end(); iter++) {
+			auto tomatoRec = (*iter)->getBoundingBox();
+			if (tomatoRec.containsPoint(bone->getPosition())) {
+				if ((*iter)->isFrameDisplayed(tomatoNormal)) {
+					auto tomatoHurtedAnimation = Animation::createWithSpriteFrames(tomatoHurted, 0.1f);
+					auto tomatoHurtedAnimate = Animate::create(tomatoHurtedAnimation);
+					(*iter)->runAction(Repeat::create(tomatoHurtedAnimate, 1));
+				}
+				else if ((*iter)->isFrameDisplayed(tomatoHurted.back())) {
+					auto tomatoDieAnimation = Animation::createWithSpriteFrames(tomatoDie, 0.1f);
+					auto tomatoDieAnimate = Animate::create(tomatoDieAnimation);
+					Sequence* seq = Sequence::create(tomatoDieAnimate, CallFunc::create(CC_CALLBACK_0
+						(Sprite::removeFromParent, (*iter))), NULL);
+					(*iter)->runAction(seq);
+				}
+				bone->removeFromParent();
+				isBoneExist = false;
+				break;
+			}
+		}
+	}
+	else if (isFishExist) {
+		//TODO
+		//ºÏ≤‚”„‘“∑¨«—
+	}
+	
 }
 
