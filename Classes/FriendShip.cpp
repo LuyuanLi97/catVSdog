@@ -98,6 +98,12 @@ bool FriendShip::init() {
 // ‘§º”‘ÿ“Ù–ß
 void FriendShip::preloadMusic() {
   auto sae = SimpleAudioEngine::getInstance();
+  sae->preloadEffect("catMeow.wav");
+  sae->preloadEffect("dogBark.wav");
+  sae->preloadEffect("tomatoHurt.mp3");
+  sae->preloadBackgroundMusic("bgm.mp3");
+
+  sae->playBackgroundMusic("bgm.mp3", true);
 }
 
 // ÃÌº”±≥æ∞∫Õ∏˜÷÷æ´¡È
@@ -309,14 +315,25 @@ void FriendShip::update(float dt) {
 			catHurtedAnimation->setRestoreOriginalFrame(true);
 			auto catHurtedAnimate = Animate::create(catHurtedAnimation);
 			cat->runAction(Repeat::create(catHurtedAnimate, 1));
+			SimpleAudioEngine::getInstance()->playEffect("catMeow.wav", false);
+
 
 			percentageCat -= 10;
 			if (percentageCat < 0)
 				percentageCat = 0;
 			pCat->setPercentage(percentageCat);
 			if (percentageCat == 0) {
-				//TODO
-				//π∑ §¿˚
+				//π∑ §¿˚:π∑’‚±ﬂ∑≈—Ãª®,√®ƒ«±ﬂ”–ª“…´—ÃŒÌ
+				auto firework = CCParticleFireworks::create();
+				firework->setPosition(3 * visibleSize.width / 4 + 50, visibleSize.height / 2 - 300);
+				this->addChild(firework, 1);
+
+				auto smoke = CCParticleSmoke::create();
+				smoke->setPosition(visibleSize.width / 4, visibleSize.height / 2 - 300);
+				smoke->setColor(Color3B(96, 96, 96));
+				this->addChild(smoke, 1);
+
+				GameOver("dog");
 			}
 
 			isBoneExist = false;
@@ -337,14 +354,24 @@ void FriendShip::update(float dt) {
 			dogHurtedAnimation->setRestoreOriginalFrame(true);
 			auto dogHurtedAnimate = Animate::create(dogHurtedAnimation);
 			dog->runAction(Repeat::create(dogHurtedAnimate, 1));
+			SimpleAudioEngine::getInstance()->playEffect("dogBark.wav", false);
 
 			percentageDog -= 10;
 			if (percentageDog < 0)
 				percentageDog = 0;
 			pDog->setPercentage(percentageDog);
 			if (percentageDog == 0) {
-				//TODO
-				//√® §¿˚
+				//√® §¿˚£∫√®’‚±ﬂ∑≈—Ãª®£¨π∑ƒ«±ﬂ”–ª“…´—ÃŒÌ
+				auto firework = CCParticleFireworks::create();
+				firework->setPosition(visibleSize.width / 4 - 50, visibleSize.height / 2 - 300);
+				this->addChild(firework, 1);
+
+				auto smoke = CCParticleSmoke::create();
+				smoke->setPosition(3 * visibleSize.width / 4, visibleSize.height / 2 - 300);
+				smoke->setColor(Color3B(96, 96, 96));
+				this->addChild(smoke, 1);
+
+				GameOver("cat");
 			}
 
 			isFishExist = false;
@@ -361,6 +388,8 @@ void FriendShip::update(float dt) {
 		for (list<Sprite*>::iterator iter = tomatoes.begin(); iter != tomatoes.end(); iter++) {
 			auto tomatoRec = (*iter)->getBoundingBox();
 			if (tomatoRec.containsPoint(bone->getPosition())) {
+				SimpleAudioEngine::getInstance()->playEffect("tomatoHurt.mp3", false);
+
 				if ((*iter)->isFrameDisplayed(tomatoNormal)) {
 					auto tomatoHurtedAnimation = Animation::createWithSpriteFrames(tomatoHurted, 0.1f);
 					auto tomatoHurtedAnimate = Animate::create(tomatoHurtedAnimation);
@@ -372,6 +401,8 @@ void FriendShip::update(float dt) {
 					Sequence* seq = Sequence::create(tomatoDieAnimate, CallFunc::create(CC_CALLBACK_0
 						(Sprite::removeFromParent, (*iter))), NULL);
 					(*iter)->runAction(seq);
+
+					iter = tomatoes.erase(iter);
 				}
 				bone->removeFromParent();
 				isBoneExist = false;
@@ -380,9 +411,71 @@ void FriendShip::update(float dt) {
 		}
 	}
 	else if (isFishExist) {
-		//TODO
 		//ºÏ≤‚”„‘“∑¨«—
+		for (list<Sprite*>::iterator iter = tomatoes.begin(); iter != tomatoes.end(); iter++) {
+			auto tomatoRec = (*iter)->getBoundingBox();
+			if (tomatoRec.containsPoint(fish->getPosition())) {
+				SimpleAudioEngine::getInstance()->playEffect("tomatoHurt.mp3", false);
+
+				if ((*iter)->isFrameDisplayed(tomatoNormal)) {
+					auto tomatoHurtedAnimation = Animation::createWithSpriteFrames(tomatoHurted, 0.1f);
+					auto tomatoHurtedAnimate = Animate::create(tomatoHurtedAnimation);
+					(*iter)->runAction(Repeat::create(tomatoHurtedAnimate, 1));
+				}
+				else if ((*iter)->isFrameDisplayed(tomatoHurted.back())) {
+					auto tomatoDieAnimation = Animation::createWithSpriteFrames(tomatoDie, 0.1f);
+					auto tomatoDieAnimate = Animate::create(tomatoDieAnimation);
+					Sequence* seq = Sequence::create(tomatoDieAnimate, CallFunc::create(CC_CALLBACK_0
+					(Sprite::removeFromParent, (*iter))), NULL);
+					(*iter)->runAction(seq);
+
+					iter = tomatoes.erase(iter);
+				}
+				fish->removeFromParent();
+				isFishExist = false;
+				break;
+			}
+		}
 	}
-	
+}
+
+void FriendShip::GameOver(string whoWins) {
+	unschedule(schedule_selector(FriendShip::update));
+	SimpleAudioEngine::getInstance()->stopBackgroundMusic("bgm.mp3");
+	//SimpleAudioEngine::getInstance()->playEffect("gameover.mp3", false);
+
+	auto label1 = Label::create();
+	if (whoWins == "cat")
+		label1 = Label::createWithTTF("CAT WINS!", "fonts/Marker Felt.ttf", 60);
+	else 
+		label1 = Label::createWithTTF("DOG WINS!", "fonts/Marker Felt.ttf", 60);
+	label1->setColor(Color3B(0, 0, 0));
+	label1->setPosition(visibleSize.width / 2, visibleSize.height / 2);
+	this->addChild(label1);
+
+	auto label2 = Label::createWithTTF("REPLAY", "fonts/Marker Felt.ttf", 40);
+	label2->setColor(Color3B(0, 0, 0));
+	auto replayBtn = MenuItemLabel::create(label2, CC_CALLBACK_1(FriendShip::replayCallback, this));
+	Menu* replay = Menu::create(replayBtn, NULL);
+	replay->setPosition(visibleSize.width / 2 - 80, visibleSize.height / 2 - 100);
+	this->addChild(replay);
+
+	auto label3 = Label::createWithTTF("EXIT", "fonts/Marker Felt.ttf", 40);
+	label3->setColor(Color3B(0, 0, 0));
+	auto exitBtn = MenuItemLabel::create(label3, CC_CALLBACK_1(FriendShip::exitCallback, this));
+	Menu* exit = Menu::create(exitBtn, NULL);
+	exit->setPosition(visibleSize.width / 2 + 90, visibleSize.height / 2 - 100);
+	this->addChild(exit);
+}
+
+void FriendShip::replayCallback(Ref * pSender) {
+	Director::getInstance()->replaceScene(FriendShip::createScene());
+}
+
+void FriendShip::exitCallback(Ref * pSender) {
+	Director::getInstance()->end();
+#if (CC_TARGET_PLATFORM == CC_PLATFORM_IOS)
+	exit(0);
+#endif
 }
 
