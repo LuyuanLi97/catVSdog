@@ -27,6 +27,9 @@ public:
 	void menuCloseCallback(cocos2d::Ref* pSender);
 
 	void update(float dt);
+	void GameOver(string whoWins);
+	void replayCallback(Ref * pSender);
+	void exitCallback(Ref * pSender);
 
 	// implement the "static create()" method manually
 	CREATE_FUNC(FriendShip);
@@ -76,3 +79,4 @@ private:
 };
 
 #endif // __FRIEND_SHIP_H__
+
