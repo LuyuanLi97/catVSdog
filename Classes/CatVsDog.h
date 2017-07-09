@@ -4,7 +4,7 @@
 #include "cocos2d.h"
 using namespace std;
 USING_NS_CC;
-class FriendShip : public Layer {
+class CatVsDog : public Layer {
 public:
 	static PhysicsWorld* world;
 	static cocos2d::Scene* createScene();
@@ -12,12 +12,16 @@ public:
 	virtual bool init();
 
 	// method
-	void preloadMusic(); // é¢„åŠ è½½éŸ³ä¹/éŸ³æ•ˆ
+	void preloadMusic(); // Ô¤¼ÓÔØÒôÀÖ/ÒôĞ§
 	void setFrame();
 	void setAni();
-	void setSprite(); // è®¾ç½®å‡ºåœºæ•ˆæœ
+	void setSprite(); // ÉèÖÃ³ö³¡Ğ§¹û
 	void spriteFall();
-	void addListener(); // æ·»åŠ ç›‘å¬å™¨
+	void addListener(); // Ìí¼Ó¼àÌıÆ÷
+	void addBarsAndProps();
+	void changeWind();
+
+	float windstrength;
 
 	bool onConcactBegin(PhysicsContact& contact);
 	bool onTouchBegan(Touch *touch, Event *event);
@@ -32,7 +36,7 @@ public:
 	void exitCallback(Ref * pSender);
 
 	// implement the "static create()" method manually
-	CREATE_FUNC(FriendShip);
+	CREATE_FUNC(CatVsDog);
 
 private:
 	PhysicsWorld* m_world;
@@ -48,11 +52,19 @@ private:
 	list<Sprite*> tomatoes;
 	ProgressTimer* pCat;
 	ProgressTimer* pDog;
+	ProgressTimer* pCatPower;
+	ProgressTimer* pDogPower;
 	int percentageCat, percentageDog;
-	float power;
+	int percentagePower;
+	int power;
+	int damage;
 	bool isDogAddingPower, isCatAddingPower;
-	//isBoneExist == trueæ—¶ï¼Œéª¨å¤´æ­£åœ¨è¢«æŠ•æ·
-	bool isBoneExist, isFishExist;
+	bool isFishExist;
+	bool isBoneExist;
+	bool isCatDouble;
+	bool isDogDouble;
+	bool isCatBoom;
+	bool isDogBoom;
 
 	// cat
 	SpriteFrame* catNormal;
@@ -60,6 +72,7 @@ private:
 	SpriteFrame* catSick;
 	Vector<SpriteFrame*> catHurted;
 	Vector<SpriteFrame*> catBlast;
+	Vector<SpriteFrame*> catLaugh;
 
 	// dog
 	SpriteFrame* dogNormal;
@@ -67,6 +80,7 @@ private:
 	SpriteFrame* dogSick;
 	Vector<SpriteFrame*> dogHurted;
 	Vector<SpriteFrame*> dogBlast;
+	Vector<SpriteFrame*> dogLaugh;
 
 	// tomato
 	SpriteFrame* tomatoNormal;
@@ -74,6 +88,15 @@ private:
 	SpriteFrame* tomatoHurt2;
 	Vector<SpriteFrame*> tomatoDie;
 	Vector<SpriteFrame*> tomatoHurted;
+
+	// wind
+	SpriteFrame* wind_left_strong;
+	SpriteFrame* wind_left_weak;
+	SpriteFrame* wind_right_strong;
+	SpriteFrame* wind_right_weak;
+	cocos2d::Label* windLevel;
+	cocos2d::Label* turn;
+
 
 	string lastAttack;
 };
